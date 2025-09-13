@@ -33,7 +33,7 @@ async def terminal_page():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Financial Research Agent - Terminal</title>
+        <title>Financial Research Agent - Rich CLI</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
         <style>
             * {
@@ -169,7 +169,7 @@ async def terminal_page():
         <div id="terminal-container">
             <div id="loading" class="loading">
                 <div class="spinner"></div>
-                <span>Starting terminal...</span>
+                <span>Starting Rich CLI Financial Agent...</span>
             </div>
             <div id="terminal" style="display: none;"></div>
         </div>
@@ -271,10 +271,10 @@ async def terminal_page():
                     updateStatus('connected', 'Connected');
                     showTerminal();
                     
-                    // Start the financial agent
+                    // Start the financial agent Rich CLI
                     socket.send(JSON.stringify({
                         type: 'start',
-                        command: 'python financial_agent_textual.py'
+                        command: 'python financial_agent_rich.py'
                     }));
                 };
                 
@@ -438,10 +438,12 @@ async def start_terminal(websocket: WebSocket, command: str) -> str:
         # Start the process
         env = os.environ.copy()
         env["TERM"] = "xterm-256color"
-        env["COLUMNS"] = "80"
-        env["LINES"] = "24"
+        env["COLUMNS"] = "120"
+        env["LINES"] = "30"
+        env["FORCE_COLOR"] = "1"
+        env["PYTHONUNBUFFERED"] = "1"
         
-        # Start the financial agent
+        # Start the Rich CLI financial agent
         process = subprocess.Popen(
             command.split(),
             stdin=slave,
