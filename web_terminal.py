@@ -66,11 +66,11 @@ async def terminal_page():
             }
             
             #terminal-container {
-                position: absolute;
+                position: fixed;
                 top: 80px;
-                left: 20px;
-                right: 20px;
-                bottom: 20px;
+                left: 10px;
+                right: 10px;
+                bottom: 10px;
                 background: #000;
                 border: 2px solid #4CAF50;
                 border-radius: 8px;
@@ -81,7 +81,7 @@ async def terminal_page():
             #terminal {
                 width: 100%;
                 height: 100%;
-                padding: 10px;
+                padding: 5px;
             }
             
             .connection-status {
@@ -110,17 +110,19 @@ async def terminal_page():
             }
             
             .instructions {
-                position: absolute;
-                bottom: 30px;
+                position: fixed;
+                bottom: 15px;
                 left: 50%;
                 transform: translateX(-50%);
                 background: rgba(45, 45, 45, 0.95);
                 color: #b0b0b0;
-                padding: 10px 15px;
+                padding: 8px 12px;
                 border-radius: 5px;
-                font-size: 0.8rem;
+                font-size: 0.75rem;
                 text-align: center;
                 border: 1px solid #555;
+                z-index: 1000;
+                backdrop-filter: blur(5px);
             }
             
             .loading {
@@ -147,6 +149,41 @@ async def terminal_page():
             @keyframes spin {
                 0% { transform: rotate(0deg); }
                 100% { transform: rotate(360deg); }
+            }
+            
+            /* Responsive design for different screen sizes */
+            @media (max-width: 768px) {
+                #terminal-container {
+                    top: 70px;
+                    left: 5px;
+                    right: 5px;
+                    bottom: 5px;
+                    border-radius: 4px;
+                }
+                
+                .header h1 {
+                    font-size: 1.4rem;
+                }
+                
+                .header p {
+                    font-size: 0.8rem;
+                }
+                
+                .instructions {
+                    font-size: 0.7rem;
+                    padding: 6px 10px;
+                }
+            }
+            
+            @media (max-width: 480px) {
+                .header {
+                    padding: 10px 15px;
+                }
+                
+                .connection-status {
+                    font-size: 0.7rem;
+                    padding: 3px 8px;
+                }
             }
         </style>
     </head>
@@ -227,8 +264,22 @@ async def terminal_page():
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('terminal').style.display = 'block';
                 terminal.open(document.getElementById('terminal'));
-                fitAddon.fit();
-                terminal.focus();
+                
+                // Fit terminal to container and send initial size
+                setTimeout(() => {
+                    fitAddon.fit();
+                    terminal.focus();
+                    
+                    // Send initial terminal size to backend
+                    if (isConnected) {
+                        const dims = terminal.getDimensions();
+                        socket.send(JSON.stringify({
+                            type: 'resize',
+                            cols: dims.cols,
+                            rows: dims.rows
+                        }));
+                    }
+                }, 200);
             }
             
             function connectWebSocket() {
@@ -294,12 +345,31 @@ async def terminal_page():
                 }
             });
             
-            // Window resize handler
-            window.addEventListener('resize', function() {
+            // Window resize handler - resize terminal to fit available space
+            function resizeTerminal() {
                 if (terminal && fitAddon) {
-                    fitAddon.fit();
+                    // Small delay to ensure DOM has updated
+                    setTimeout(() => {
+                        fitAddon.fit();
+                        
+                        // Send resize to backend
+                        if (isConnected) {
+                            const dims = terminal.getDimensions();
+                            socket.send(JSON.stringify({
+                                type: 'resize',
+                                cols: dims.cols,
+                                rows: dims.rows
+                            }));
+                        }
+                    }, 100);
                 }
-            });
+            }
+            
+            window.addEventListener('resize', resizeTerminal);
+            
+            // Also resize when terminal becomes visible
+            const resizeObserver = new ResizeObserver(resizeTerminal);
+            resizeObserver.observe(document.getElementById('terminal-container'));
             
             // Start connection
             connectWebSocket();
