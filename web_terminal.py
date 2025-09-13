@@ -39,18 +39,15 @@ async def terminal_page():
             body {
                 margin: 0;
                 padding: 0;
-                background: #1a1a1a;
+                background: #000;
                 font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
                 overflow: hidden;
+                height: 100vh;
+                width: 100vw;
             }
             
             .header {
-                background: #2d2d2d;
-                color: #4CAF50;
-                padding: 15px 20px;
-                text-align: center;
-                border-bottom: 2px solid #4CAF50;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                display: none;
             }
             
             .header h1 {
@@ -67,31 +64,30 @@ async def terminal_page():
             
             #terminal-container {
                 position: fixed;
-                top: 80px;
-                left: 10px;
-                right: 10px;
-                bottom: 10px;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
                 background: #000;
-                border: 2px solid #4CAF50;
-                border-radius: 8px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.5);
                 overflow: hidden;
             }
             
             #terminal {
-                width: 100%;
-                height: 100%;
-                padding: 5px;
+                width: 100vw;
+                height: 100vh;
+                padding: 0;
+                margin: 0;
             }
             
             .connection-status {
-                position: absolute;
+                position: fixed;
                 top: 10px;
                 right: 20px;
                 padding: 5px 10px;
                 border-radius: 15px;
                 font-size: 0.8rem;
                 font-weight: bold;
+                z-index: 1000;
             }
             
             .connected {
@@ -110,19 +106,7 @@ async def terminal_page():
             }
             
             .instructions {
-                position: fixed;
-                bottom: 15px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: rgba(45, 45, 45, 0.95);
-                color: #b0b0b0;
-                padding: 8px 12px;
-                border-radius: 5px;
-                font-size: 0.75rem;
-                text-align: center;
-                border: 1px solid #555;
-                z-index: 1000;
-                backdrop-filter: blur(5px);
+                display: none;
             }
             
             .loading {
@@ -151,40 +135,7 @@ async def terminal_page():
                 100% { transform: rotate(360deg); }
             }
             
-            /* Responsive design for different screen sizes */
-            @media (max-width: 768px) {
-                #terminal-container {
-                    top: 70px;
-                    left: 5px;
-                    right: 5px;
-                    bottom: 5px;
-                    border-radius: 4px;
-                }
-                
-                .header h1 {
-                    font-size: 1.4rem;
-                }
-                
-                .header p {
-                    font-size: 0.8rem;
-                }
-                
-                .instructions {
-                    font-size: 0.7rem;
-                    padding: 6px 10px;
-                }
-            }
-            
-            @media (max-width: 480px) {
-                .header {
-                    padding: 10px 15px;
-                }
-                
-                .connection-status {
-                    font-size: 0.7rem;
-                    padding: 3px 8px;
-                }
-            }
+            /* Fullscreen terminal - no responsive changes needed */
         </style>
     </head>
     <body>
