@@ -41,6 +41,52 @@ class FinancialAgentRich:
         )
         self.console.print(banner)
         self.console.print()
+        
+    def show_stock_suggestions(self):
+        """Display popular stock suggestions"""
+        self.console.print("[bold green]💡 Popular Stocks to Analyze:[/bold green]\n")
+        
+        # Define stock categories
+        stock_categories = {
+            "🏛️ Large Cap Tech": ["AAPL", "MSFT", "GOOGL", "AMZN", "META"],
+            "🚗 Growth & Innovation": ["TSLA", "NVDA", "NFLX", "UBER", "SHOP"],
+            "💰 Financial Services": ["BRK-A", "JPM", "V", "MA", "BAC"],
+            "🏥 Healthcare & Biotech": ["JNJ", "PFE", "UNH", "ABBV", "TMO"],
+            "🏭 Industrial & Energy": ["CAT", "XOM", "CVX", "GE", "BA"],
+            "🛒 Consumer & Retail": ["KO", "PEP", "WMT", "HD", "MCD"]
+        }
+        
+        # Create columns for each category
+        columns = []
+        for category, stocks in stock_categories.items():
+            stock_list = "\n".join([f"• [cyan]{stock}[/cyan]" for stock in stocks])
+            panel = Panel(
+                stock_list,
+                title=category,
+                title_align="left",
+                border_style="dim",
+                padding=(0, 1)
+            )
+            columns.append(panel)
+        
+        # Display in columns
+        self.console.print(Columns(columns[:3], equal=True))
+        self.console.print()
+        self.console.print(Columns(columns[3:], equal=True))
+        self.console.print()
+        
+        # Show quick example
+        example_panel = Panel(
+            "[bold yellow]💡 Quick Start Examples:[/bold yellow]\n"
+            "• Type [bold cyan]AAPL[/bold cyan] for Apple stock analysis\n"
+            "• Type [bold cyan]TSLA[/bold cyan] for Tesla comprehensive analysis\n"
+            "• Type [bold cyan]MSFT[/bold cyan] for Microsoft analysis",
+            title="🚀 Getting Started",
+            border_style="yellow",
+            padding=(0, 1)
+        )
+        self.console.print(example_panel)
+        self.console.print()
     
     def get_stock_input(self) -> str:
         """Get stock ticker from user input"""
@@ -679,6 +725,7 @@ class FinancialAgentRich:
     def run(self):
         """Main application loop"""
         self.show_banner()
+        self.show_stock_suggestions()
         
         while True:
             try:
