@@ -1,0 +1,25 @@
+# Core dependencies
+yfinance>=0.2.18
+pandas>=2.0.0
+numpy>=1.24.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+textblob>=0.17.1
+praw>=7.7.0
+
+# Web framework dependencies
+fastapi>=0.104.0
+uvicorn>=0.20.0
+jinja2>=3.1.0
+python-multipart>=0.0.6
+
+# TUI dependencies  
+textual>=0.43.0
+rich>=13.3.3
+
+# Web deployment
+textual-web>=0.8.0
+
+# Optional: Streamlit (for alternative deployment)
+streamlit>=1.28.0
+plotly>=5.15.0

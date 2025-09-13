@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block title %}{{ results.stock_data.name }} Analysis - Financial Research Agent{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header with stock info -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1>{{ results.stock_data.name }} ({{ results.symbol }})</h1>
+                    <p class="text-muted mb-0">{{ results.analysis_mode.title() }} Analysis Results</p>
+                </div>
+                <div>
+                    <a href="/" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> New Analysis
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card analysis-card h-100">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-muted">Current Price</h6>
+                    <h3 class="mb-1">${{ "%.2f"|format(results.stock_data.current_price) }}</h3>
+                    <span class="badge {% if results.stock_data.change_percent >= 0 %}bg-success{% else %}bg-danger{% endif %}">
+                        {% if results.stock_data.change_percent >= 0 %}+{% endif %}{{ "%.2f"|format(results.stock_data.change_percent) }}%
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card analysis-card h-100">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-muted">Market Cap</h6>
+                    <h4 class="mb-1">
+                        {% if results.stock_data.market_cap %}
+                            {% if results.stock_data.market_cap >= 1e12 %}
+                                ${{ "%.2f"|format(results.stock_data.market_cap / 1e12) }}T
+                            {% elif results.stock_data.market_cap >= 1e9 %}
+                                ${{ "%.2f"|format(results.stock_data.market_cap / 1e9) }}B
+                            {% elif results.stock_data.market_cap >= 1e6 %}
+                                ${{ "%.2f"|format(results.stock_data.market_cap / 1e6) }}M
+                            {% else %}
+                                ${{ "{:,.0f}"|format(results.stock_data.market_cap) }}
+                            {% endif %}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card analysis-card h-100 recommendation-{{ results.recommendation.action.lower().replace('_', '-') }}">
+                <div class="card-body text-center">
+                    <h6 class="card-title">Recommendation</h6>
+                    <h4 class="mb-1">
+                        {% if results.recommendation.action == 'STRONG_BUY' %}🟢 Strong Buy
+                        {% elif results.recommendation.action == 'BUY' %}🟢 Buy
+                        {% elif results.recommendation.action == 'HOLD' %}🟡 Hold
+                        {% elif results.recommendation.action == 'SELL' %}🔴 Sell
+                        {% elif results.recommendation.action == 'STRONG_SELL' %}🔴 Strong Sell
+                        {% endif %}
+                    </h4>
+                    <small>{{ results.recommendation.confidence }}% confidence</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card analysis-card h-100">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-muted">Overall Score</h6>
+                    <h3 class="mb-1 
+                        {% if results.recommendation.overall_score >= 70 %}text-success
+                        {% elif results.recommendation.overall_score >= 50 %}text-warning
+                        {% else %}text-danger{% endif %}">
+                        {{ results.recommendation.overall_score }}/100
+                    </h3>
+                    <small>{{ results.recommendation.risk_level }} Risk</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Tabs -->
+    <div class="card analysis-card">
+        <div class="card-body">
+            <ul class="nav nav-pills mb-4" id="analysisTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="fundamentals-tab" data-bs-toggle="pill" data-bs-target="#fundamentals" type="button" role="tab">
+                        📊 Fundamentals
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="technical-tab" data-bs-toggle="pill" data-bs-target="#technical" type="button" role="tab">
+                        📈 Technical
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="sentiment-tab" data-bs-toggle="pill" data-bs-target="#sentiment" type="button" role="tab">
+                        🎭 Sentiment
+                    </button>
+                </li>
+                {% if results.comprehensive %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="comprehensive-tab" data-bs-toggle="pill" data-bs-target="#comprehensive" type="button" role="tab">
+                        🔬 Comprehensive
+                    </button>
+                </li>
+                {% endif %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="recommendation-tab" data-bs-toggle="pill" data-bs-target="#recommendation" type="button" role="tab">
+                        📋 Summary
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="analysisTabsContent">
+                <!-- Fundamentals Tab -->
+                <div class="tab-pane fade show active" id="fundamentals" role="tabpanel">
+                    <h5 class="mb-3">📊 Fundamental Analysis</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>Valuation Metrics</h6>
+                            <table class="table table-sm">
+                                {% if results.fundamentals.pe_ratio %}
+                                <tr><td>P/E Ratio</td><td>{{ "%.2f"|format(results.fundamentals.pe_ratio) }}</td></tr>
+                                {% endif %}
+                                {% if results.fundamentals.pb_ratio %}
+                                <tr><td>P/B Ratio</td><td>{{ "%.2f"|format(results.fundamentals.pb_ratio) }}</td></tr>
+                                {% endif %}
+                                {% if results.fundamentals.ps_ratio %}
+                                <tr><td>P/S Ratio</td><td>{{ "%.2f"|format(results.fundamentals.ps_ratio) }}</td></tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Profitability</h6>
+                            <table class="table table-sm">
+                                {% if results.fundamentals.roe %}
+                                <tr><td>ROE</td><td>{{ "%.1f"|format(results.fundamentals.roe) }}%</td></tr>
+                                {% endif %}
+                                {% if results.fundamentals.roa %}
+                                <tr><td>ROA</td><td>{{ "%.1f"|format(results.fundamentals.roa) }}%</td></tr>
+                                {% endif %}
+                                {% if results.fundamentals.profit_margin %}
+                                <tr><td>Profit Margin</td><td>{{ "%.1f"|format(results.fundamentals.profit_margin) }}%</td></tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Growth & Health</h6>
+                            <table class="table table-sm">
+                                {% if results.fundamentals.revenue_growth %}
+                                <tr><td>Revenue Growth</td><td>{{ "%.1f"|format(results.fundamentals.revenue_growth) }}%</td></tr>
+                                {% endif %}
+                                {% if results.fundamentals.current_ratio %}
+                                <tr><td>Current Ratio</td><td>{{ "%.2f"|format(results.fundamentals.current_ratio) }}</td></tr>
+                                {% endif %}
+                                {% if results.fundamentals.debt_to_equity %}
+                                <tr><td>Debt/Equity</td><td>{{ "%.2f"|format(results.fundamentals.debt_to_equity) }}</td></tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="badge bg-primary fs-6">Fundamental Score: {{ "%.1f"|format(results.fundamentals.score) }}/100</span>
+                    </div>
+                </div>
+
+                <!-- Technical Tab -->
+                <div class="tab-pane fade" id="technical" role="tabpanel">
+                    <h5 class="mb-3">📈 Technical Analysis</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table">
+                                <tr><td><strong>Trend</strong></td><td>
+                                    <span class="badge 
+                                        {% if results.technicals.trend in ['STRONG_BULLISH', 'BULLISH'] %}bg-success
+                                        {% elif results.technicals.trend == 'NEUTRAL' %}bg-warning
+                                        {% else %}bg-danger{% endif %}">
+                                        {{ results.technicals.trend }}
+                                    </span>
+                                </td></tr>
+                                {% if results.technicals.rsi %}
+                                <tr><td><strong>RSI (14)</strong></td><td>{{ "%.1f"|format(results.technicals.rsi) }}</td></tr>
+                                {% endif %}
+                                {% if results.technicals.macd %}
+                                <tr><td><strong>MACD</strong></td><td>{{ "%.4f"|format(results.technicals.macd) }}</td></tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table">
+                                {% if results.technicals.sma_20 %}
+                                <tr><td><strong>SMA 20</strong></td><td>${{ "%.2f"|format(results.technicals.sma_20) }}</td></tr>
+                                {% endif %}
+                                {% if results.technicals.sma_50 %}
+                                <tr><td><strong>SMA 50</strong></td><td>${{ "%.2f"|format(results.technicals.sma_50) }}</td></tr>
+                                {% endif %}
+                                {% if results.technicals.support_level %}
+                                <tr><td><strong>Support</strong></td><td>${{ "%.2f"|format(results.technicals.support_level) }}</td></tr>
+                                {% endif %}
+                                {% if results.technicals.resistance_level %}
+                                <tr><td><strong>Resistance</strong></td><td>${{ "%.2f"|format(results.technicals.resistance_level) }}</td></tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="badge bg-primary fs-6">Technical Score: {{ "%.1f"|format(results.technicals.score) }}/100</span>
+                    </div>
+                </div>
+
+                <!-- Sentiment Tab -->
+                <div class="tab-pane fade" id="sentiment" role="tabpanel">
+                    <h5 class="mb-3">🎭 Sentiment Analysis</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table">
+                                <tr><td><strong>Analyst Rating</strong></td><td>{{ results.sentiment.analyst_rating or 'N/A' }}</td></tr>
+                                <tr><td><strong>Analyst Count</strong></td><td>{{ results.sentiment.analyst_count or 'N/A' }}</td></tr>
+                                <tr><td><strong>News Sentiment</strong></td><td>
+                                    {% if results.sentiment.news_sentiment %}
+                                        {{ "%.1f"|format(results.sentiment.news_sentiment) }}/100
+                                    {% else %}
+                                        <small class="text-muted">Requires API key</small>
+                                    {% endif %}
+                                </td></tr>
+                                <tr><td><strong>Social Sentiment</strong></td><td>
+                                    {% if results.sentiment.social_sentiment %}
+                                        {{ "%.1f"|format(results.sentiment.social_sentiment) }}/100
+                                    {% else %}
+                                        <small class="text-muted">Requires API keys</small>
+                                    {% endif %}
+                                </td></tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            {% if results.sentiment.sentiment_summary %}
+                            <div class="alert alert-info">
+                                <strong>Summary:</strong> {{ results.sentiment.sentiment_summary }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="badge bg-primary fs-6">Sentiment Score: {{ "%.1f"|format(results.sentiment.score) }}/100</span>
+                    </div>
+                </div>
+
+                {% if results.comprehensive %}
+                <!-- Comprehensive Tab -->
+                <div class="tab-pane fade" id="comprehensive" role="tabpanel">
+                    <h5 class="mb-3">🔬 Comprehensive Analysis</h5>
+                    
+                    <div class="mb-4">
+                        <h4 class="text-center">Composite Score: 
+                            <span class="badge 
+                                {% if results.comprehensive.composite_score >= 70 %}bg-success
+                                {% elif results.comprehensive.composite_score >= 50 %}bg-warning
+                                {% else %}bg-danger{% endif %} fs-5">
+                                {{ "%.1f"|format(results.comprehensive.composite_score) }}/100
+                            </span>
+                        </h4>
+                        <p class="text-center text-muted">Analysis Confidence: {{ "%.1%"|format(results.comprehensive.confidence_level) }}</p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="comprehensive-section">
+                                <h6>💊 Financial Health</h6>
+                                <table class="table table-sm">
+                                    {% if results.comprehensive.financial_health.piotroski_score is not none %}
+                                    <tr><td>Piotroski F-Score</td><td>{{ results.comprehensive.financial_health.piotroski_score }}/9</td></tr>
+                                    {% endif %}
+                                    {% if results.comprehensive.financial_health.altman_z_score is not none %}
+                                    <tr><td>Altman Z-Score</td><td>
+                                        <span class="badge 
+                                            {% if results.comprehensive.financial_health.altman_z_score > 3.0 %}bg-success
+                                            {% elif results.comprehensive.financial_health.altman_z_score > 1.8 %}bg-warning
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ "%.2f"|format(results.comprehensive.financial_health.altman_z_score) }}
+                                        </span>
+                                    </td></tr>
+                                    {% endif %}
+                                </table>
+                                <span class="badge bg-info">Health Score: {{ "%.1f"|format(results.comprehensive.financial_health.score) }}/100</span>
+                            </div>
+
+                            <div class="comprehensive-section">
+                                <h6>💰 Valuation Analysis</h6>
+                                <table class="table table-sm">
+                                    {% if results.comprehensive.valuation_metrics.dcf_estimate %}
+                                    <tr><td>DCF Estimate</td><td>${{ "%.2f"|format(results.comprehensive.valuation_metrics.dcf_estimate) }}</td></tr>
+                                    {% endif %}
+                                    {% if results.comprehensive.valuation_metrics.graham_number %}
+                                    <tr><td>Graham Number</td><td>${{ "%.2f"|format(results.comprehensive.valuation_metrics.graham_number) }}</td></tr>
+                                    {% endif %}
+                                </table>
+                                <span class="badge bg-success">Valuation Score: {{ "%.1f"|format(results.comprehensive.valuation_metrics.valuation_score) }}/100</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="comprehensive-section">
+                                <h6>⚠️ Risk Analysis</h6>
+                                <table class="table table-sm">
+                                    {% if results.comprehensive.risk_metrics.beta is not none %}
+                                    <tr><td>Beta</td><td>{{ "%.2f"|format(results.comprehensive.risk_metrics.beta) }}</td></tr>
+                                    {% endif %}
+                                    {% if results.comprehensive.risk_metrics.sharpe_ratio is not none %}
+                                    <tr><td>Sharpe Ratio</td><td>{{ "%.2f"|format(results.comprehensive.risk_metrics.sharpe_ratio) }}</td></tr>
+                                    {% endif %}
+                                    {% if results.comprehensive.risk_metrics.max_drawdown is not none %}
+                                    <tr><td>Max Drawdown</td><td>{{ "%.1f"|format(results.comprehensive.risk_metrics.max_drawdown) }}%</td></tr>
+                                    {% endif %}
+                                </table>
+                                <span class="badge bg-warning">Risk Score: {{ "%.1f"|format(results.comprehensive.risk_metrics.risk_score) }}/100</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if results.comprehensive.key_insights %}
+                    <div class="mt-4">
+                        <h6>🎯 Key Insights</h6>
+                        {% for insight in results.comprehensive.key_insights %}
+                        <div class="alert alert-success">• {{ insight }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if results.comprehensive.warnings %}
+                    <div class="mt-4">
+                        <h6>⚠️ Warnings</h6>
+                        {% for warning in results.comprehensive.warnings %}
+                        <div class="alert alert-danger">{{ warning }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Recommendation Summary Tab -->
+                <div class="tab-pane fade" id="recommendation" role="tabpanel">
+                    <h5 class="mb-3">📋 Investment Summary</h5>
+                    <div class="text-center mb-4">
+                        <h2 class="recommendation-{{ results.recommendation.action.lower().replace('_', '-') }} p-3 rounded">
+                            {{ results.recommendation.action.replace('_', ' ').title() }}
+                        </h2>
+                        <p class="lead">Confidence: {{ results.recommendation.confidence }}%</p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            {% if results.recommendation.reasoning %}
+                            <h6>Key Analysis Points:</h6>
+                            <ul>
+                                {% for reason in results.recommendation.reasoning %}
+                                <li>{{ reason }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6>Summary Metrics</h6>
+                                    <p><strong>Overall Score:</strong> {{ results.recommendation.overall_score }}/100</p>
+                                    <p><strong>Risk Level:</strong> {{ results.recommendation.risk_level }}</p>
+                                    {% if results.recommendation.price_target %}
+                                    <p><strong>Price Target:</strong> ${{ "%.2f"|format(results.recommendation.price_target) }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
