@@ -3,6 +3,6 @@ builder = "dockerfile"
 
 [deploy]
 startCommand = "python web_terminal.py"
-healthcheckPath = "/"
+healthcheckPath = "/health"
 healthcheckTimeout = 100
 restartPolicyType = "on_failure"

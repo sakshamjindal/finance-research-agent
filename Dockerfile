@@ -21,5 +21,5 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
-# Command to run the Web Terminal application
+# Command to run the Web Terminal application (Textual TUI in browser)
 CMD ["python", "web_terminal.py"]
