@@ -21,5 +21,5 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
-# Command to run the FastAPI application
-CMD ["python", "fastapi_web.py"]
+# Command to run the Web Terminal application
+CMD ["python", "web_terminal.py"]
